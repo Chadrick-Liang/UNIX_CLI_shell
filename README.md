@@ -53,7 +53,7 @@ batman
 calc
 ```
 
-3. History Script
+3. Command History 
   - Accessible through `history` command
   - Displays a list of previously executed commands in chronological order
   - Each command is numbered, making it easy for users to identify and reference past inputs
@@ -71,7 +71,7 @@ history
 
 1. Resource Usage Feedback --> Resource Display
 What it does:
-- After each command is executed, the shell automatically displays detailed statistics including CPU time (user and system), peak memory usage (RAM), context switches, and block I/O operations
+- After each command is executed, the shell automatically displays detailed statistics including CPU time (user and system), peak memory usage (RAM) and block I/O operations
 Justification:
 - By making resource consumption transparent to the user, the shell encourages more mindful usage of system resources
 - This helps users identify inefficient commands or scripts, reduce unnecessary computational load, and adopt more optimised workflows
