@@ -85,7 +85,7 @@ What it does:
 - Includes the colours: `dark`, `light`, `solarized`, `blue`, `green`, `red`, `default`
 - This functionality is supported through a dedicated data structure that stores and manages color preferences
 ```bash
-set colour_scheme red
+set colour_scheme=red
 ```
 Justification:
 - To promote inclusivity, the shell includes a customisable prompt color feature that can be activated using the `set colour_scheme` command
@@ -98,7 +98,7 @@ What it does:
 - The shell includes a timestamp display feature that can be enabled using the `set show_timestamp` command
 - When activated, the shell appends the current time to each command prompt
 ```bash
-set show_timestamp
+set show_timestamp=1
 ```
 Justification:
 - This provides users with clear temporal context for their interactions
