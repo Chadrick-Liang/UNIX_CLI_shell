@@ -106,6 +106,7 @@ Justification:
 - By offering a simple yet impactful customization that accommodates diverse working styles and needs, the feature enhances the shell’s usability for a broader range of users, reinforcing an inclusive and accessible command-line environment
 
 3. Customizable Interface --> Prompt Style
+
 What it does:
 - The `set prompt_format` command allows users to customize the text that appears at the beginning of each command line (the shell prompt)
 - Whatever the user types after `set prompt_format=` becomes the new prompt, replacing the default format
