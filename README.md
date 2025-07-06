@@ -70,6 +70,7 @@ history
 ## Sustainability 
 
 1. Resource Usage Feedback --> Resource Display
+
 What it does:
 - After each command is executed, the shell automatically displays detailed statistics including CPU time (user and system), peak memory usage (RAM) and block I/O operations
 Justification:
@@ -80,6 +81,7 @@ Justification:
 ## Inclusivity 
 
 1. Customizable Interface --> Colour Change
+
 What it does:
 - Allows users to change the color scheme of the shell prompt using the `set colour_scheme` command
 - Includes the colours: `dark`, `light`, `solarized`, `blue`, `green`, `red`, `default`
@@ -94,6 +96,7 @@ Justification:
 - By supporting visual customization, this feature ensures that users with different visual abilities or preferences can interact with the shell more comfortably, fostering a more inclusive and user-friendly experience
 
 2. Customizable Interface --> Timestamp Display
+
 What it does:
 - The shell includes a timestamp display feature that can be enabled using the `set show_timestamp` command
 - When activated, the shell appends the current time to each command prompt
