@@ -36,7 +36,7 @@ Steps to compile & run CSEShell:
 
 1. Character ASCII Art 
   - Accessible through commands: `batman`, `cyclops`, `squidward`
-  - Example: ‘batman’ outputs Batman in ASCII Art 
+  - *Example*: ‘batman’ outputs Batman in ASCII Art 
   - Adds fun and visually engaging elements to the shell, breaking the monotony of plain text interactions
 ```bash
 batman
@@ -44,11 +44,11 @@ batman
 
 2. Basic Calculator
   - Accessible through the `calc` command
-  - Example: `calc 1+1` outputs 2
+  - *Example*: `calc 1+1` outputs 2
   - Be sure to type your equation without any trailing spaces
   - This feature allows users to perform simple arithmetic operations directly within the terminal, including addition, subtraction, multiplication, division.
   - It also includes basic error handling
-  - Example: Returns `inf` (which stands for infinity) when a number is divided by zero
+  - *Example*: Returns `inf` (which stands for infinity) when a number is divided by zero
 ```bash
 calc
 ```
