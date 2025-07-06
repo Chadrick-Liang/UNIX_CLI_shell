@@ -15,11 +15,20 @@
 #include <sys/wait.h>     // for waitpid()
 #include <unistd.h>       // for fork(), exec*, etc.
 #include <stdio.h>        // for printf()
+#include <ctype.h>
+#include <termios.h> // to detect up down button inputs
 
+void type_prompt(void);
 
 #define MAX_ARGS 64
 #define MAX_RC_LINES 100
 #define MAX_LINE_LEN 1024
+
+/*history list*/
+#define MAX_HISTORY 100
+static char *history[MAX_HISTORY];
+static int  history_count = 0;
+
 
 //global snapshot variables
 static struct rusage prev_usage = {0};
@@ -34,9 +43,53 @@ typedef struct {
 
 static shell_config_t config;
 
+static const char *calc_p;
+
+// forward decls
+static double parse_expr(void);
+static double parse_term(void);
+static double parse_factor(void);
+
+// expr := term { (+|-) term }
+static double parse_expr(void) {
+  double v = parse_term();
+  while (*calc_p == '+' || *calc_p == '-') {
+    char op = *calc_p++;
+    double r = parse_term();
+    v = (op == '+') ? v + r : v - r;
+  }
+  return v;
+}
+
+// term := factor { (*|/) factor }
+static double parse_term(void) {
+  double v = parse_factor();
+  while (*calc_p == '*' || *calc_p == '/') {
+    char op = *calc_p++;
+    double r = parse_factor();
+    v = (op == '*') ? v * r : v / r;
+  }
+  return v;
+}
+
+// factor := number | '(' expr ')'
+static double parse_factor(void) {
+  while (isspace(*calc_p)) calc_p++;
+  if (*calc_p == '(') {
+    calc_p++;               // skip '('
+    double v = parse_expr();
+    if (*calc_p == ')') calc_p++;
+    return v;
+  }
+  char *end;
+  double v = strtod(calc_p, &end);
+  calc_p = end;
+  return v;
+}
+
 // Draw the prompt according to current config
 void draw_prompt() {
-    char buf[128], cwd[PATH_MAX], host[HOST_NAME_MAX];
+    char buf[128], cwd[2048], host[2048];
     char *p = config.prompt_format;
 
     // optional timestamp
@@ -104,6 +157,8 @@ void draw_prompt() {
     // reset color
     if (strcmp(config.color_scheme, "default")!=0)
         printf("\x1b[0m");
+
+    fflush(stdout);
 }
 
 char output_file_path[2048];
@@ -209,14 +264,14 @@ void process_rc_file() {
 
 int (*builtin_command_func[])(char **) = {
     &shell_cd, &shell_help, &shell_exit, &shell_usage,
-    &list_env, &set_env_var, &unset_env_var
+    &list_env, &set_env_var, &unset_env_var, &shell_batman, &shell_cyclops, &shell_squidward, &shell_calc,
 };
 
 int num_builtin_functions() {
     return sizeof(builtin_commands) / sizeof(char *);
 }
 
-void read_command(char **cmd) {
+/*void read_command(char **cmd) {
     char line[MAX_LINE]; int count = 0, i = 0;
     char *array[MAX_ARGS], *command_token;
     for (;;) {
@@ -235,6 +290,89 @@ void read_command(char **cmd) {
     }
     for (int j = 0; j < i; j++) cmd[j] = array[j];
     cmd[i] = NULL;
+}*/
+void read_command(char **cmd) {
+    struct termios orig, raw;
+    char prompt_buf[64] = {0};
+    char buf[MAX_LINE]     = {0};
+    int  pos = 0, hist_i;
+
+    // 1) enable raw mode
+    tcgetattr(STDIN_FILENO, &orig);
+    raw = orig;
+    raw.c_lflag &= ~(ECHO | ICANON);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+
+    hist_i = history_count;  // start "below" the latest history entry
+
+    // 3) read keystroke-by-keystroke
+    while (1) {
+        char c;
+        if (read(STDIN_FILENO, &c, 1) != 1) break;
+
+        // Enter: finish reading
+        if (c == '\r' || c == '\n') {
+            write(STDIN_FILENO, "\r\n", 2);
+            break;
+        }
+        // Backspace
+        else if (c == 127 || c == '\b') {
+            if (pos > 0) {
+                pos--;
+                write(STDOUT_FILENO, "\b \b", 3);
+            }
+        }
+        // Escape sequence? → arrow keys
+        else if (c == 0x1B) {
+            char seq[2];
+            if (read(STDIN_FILENO, &seq[0], 1) != 1) continue;
+            if (read(STDIN_FILENO, &seq[1], 1) != 1) continue;
+
+            if (seq[0] == '[') {
+        	if (seq[1] == 'A' && hist_i > 0)      hist_i--;
+        	else if (seq[1] == 'B' && hist_i < history_count) hist_i++;
+        	else continue;
+
+        	// erase the whole line
+        	write(STDOUT_FILENO, "\r\x1b[2K", 5);
+
+        	// copy history or blank
+        	if (hist_i < history_count) {
+            	    strcpy(buf, history[hist_i]);
+            	    pos = strlen(buf);
+        	} else {
+            	    buf[0] = '\0'; pos = 0;
+        	}
+
+       		type_prompt();
+        	write(STDOUT_FILENO, buf, pos);
+    	    }
+        }
+        // Normal character
+        else {
+            if (pos < MAX_LINE - 1) {
+                buf[pos++] = c;
+                write(STDOUT_FILENO, &c, 1);
+            }
+        }
+    }
+
+    // 4) disable raw mode
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
+
+    // 5) record non-empty line into history
+    if (pos > 0 && history_count < MAX_HISTORY) {
+        history[history_count++] = strdup(buf);
+    }
+
+    // 6) tokenize into cmd[]
+    int argc = 0;
+    char *tok = strtok(buf, " \n");
+    while (tok && argc < MAX_ARGS-1) {
+        cmd[argc++] = strdup(tok);
+        tok = strtok(NULL, " \n");
+    }
+    cmd[argc] = NULL;
 }
 
 // Draw the prompt according to current config
@@ -277,7 +415,7 @@ void type_prompt() {
 
 int main(void) {
     //set initial values for prompt style config
-    config.prompt_format  = strdup("\\u@\\h:\\w$ ");
+    config.prompt_format  = strdup("\\u@\\w$ ");
     config.color_scheme   = strdup("default");
     config.show_timestamp = 0;
 
@@ -323,6 +461,16 @@ int main(void) {
             }
             continue;
     	}
+
+	//built-in for history command
+	if (strcmp(cmd[0], "history") == 0) {
+    	    for (int i = 0; i < history_count; i++) {
+        // print with 1-based index
+        	printf("%4d  %s\n", i + 1, history[i]);
+    	    }
+    	continue;  // skip forking/execution
+	}
+
 
 
         // Built-ins
@@ -487,4 +635,115 @@ int unset_env_var(char **args) {
         perror("unsetenv");
     }
     return 1;
+}
+
+int shell_batman(char **args) {
+    (void)args;
+    printf("          .   .\n");
+    printf("          |\\_|\\\n");
+    printf("          | a_a\\\n");
+    printf("          | | \"]\n");
+    printf("      ____| '-\\___\n");
+    printf("     /.----.___.-'\\\n");
+    printf("    //        _    \\\n");
+    printf("   //   .-. (~v~) /|\n");
+    printf("  |'|  /\\:  .--  / \\\n");
+    printf(" // |-/  \\_/____/\\/~|\n");
+    printf("|/  \\ |  []_|_|_] \\ |\n");
+    printf("| \\  | \\ |___   _\\ ]_}\n");
+    printf("| |  '-' /   '.'  |\n");
+    printf("| |     /    /|:  | \n");
+    printf("| |     |   / |:  /\\\n");
+    printf("| |     /  /  |  /  \\\n");
+    printf("| |    |  /  /  |    \\\n");
+    printf("\\ |    |/\\/  |/|/\\    \\\n");
+    printf(" \\|\\ |\\|  |  | / /\\/\\__\\\n");
+    printf("  \\ \\| | /   | |__\n");
+    printf("       / |   |____)\n");
+    printf("       |_/\n");
+    return 1;
+}
+
+int shell_cyclops(char **args) {
+    (void)args;
+    printf("           _......._\n");
+    printf("       .-'.'.'.'.'.'.-.\n");
+    printf("     .'.'.'.'.'.'.'.'.'..\n");
+    printf("    /.'.'               '.\\\n");
+    printf("    |.'    _.--...--._     |\n");
+    printf("    \\    ._.-.....-._.'   /\n");
+    printf("    |     _..- .-. -.._   |\n");
+    printf(" .-.'    .   ((@))  .'   '.-.\n");
+    printf("( ^ \\      --.   .-'     / ^ )\n");
+    printf(" \\  /         .   .       \\  /\n");
+    printf(" /          .'     '.  .-    \\\n");
+    printf("( _.\\    \\ (_-._.-'_)    /._\\)\n");
+    printf(" -' \\   ' .--.          / -'\n");
+    printf("     |  / /|_| -._.'\\   |\n");
+    printf("     |   |       |_| |   /-.._\n");
+    printf(" _..-\\   .--.______.'  |\n");
+    printf("      \\       .....     |\n");
+    printf("       .  .'      .  /\n");
+    printf("         \\           .'\n");
+    printf("          -..___..-\n");
+    return 1;
+}
+
+int shell_squidward(char **args) {
+    (void)args;
+    printf("        .--'''''''''--.\n");
+    printf("     .'      .---.      '.\n");
+    printf("    /    .-----------.    \\\n");
+    printf("   /        .-----.        \\\n");
+    printf("   |       .-.   .-.       |\n");
+    printf("   |      /   \\ /   \\      |\n");
+    printf("    \\    | .-. | .-. |    /\n");
+    printf("     '-._| | | | | | |_.-'\n");
+    printf("         | '-' | '-' |\n");
+    printf("          \\___/ \\___/\n");
+    printf("       _.-'  /   \\  -._\n");
+    printf("     .' _.--|     |--._ '.\n");
+    printf("    ' _...-|     |-..._ '\n");
+    printf("           |     |\n");
+    printf("           '.___.'\n");
+    printf("             | |\n");
+    printf("            _| |_ \n");
+
+    printf("         | |     | |\n");
+    printf("         | |     | |\n");
+    printf("         | |-----| |\n");
+    printf("       ./  |     | |/.\n");
+    printf("       |    |     |    |\n");
+    printf("       '._.'| .-. |'._.'\n");
+    printf("             \\ | /\n");
+    printf("             | | |\n");
+    printf("             | | |\n");
+    printf("             | | |\n");
+    printf("            /| | |\\\n");
+    printf("          .'_| | |_.\n");
+    printf("          . | | | .'\n");
+    printf("       .    /  |  \\    .\n");
+    printf("      /o.-'  / \\  -.o\\\n");
+    printf("     /o  o\\ .'   . /o  o\\\n");
+    printf("     .___.'       .___.\n");
+    return 1;
+}
+
+// the built-in entry point
+int shell_calc(char **args) {
+  // join args[1..] into one string
+  if (!args[1]) {
+    fprintf(stderr, "Usage: calc <expression>\n");
+    return 1;
+  }
+  // build a single expression string
+  char expr[MAX_LINE_LEN] = {0};
+  for (int i = 1; args[i]; i++) {
+    strcat(expr, args[i]);
+    if (args[i+1]) strcat(expr, " ");
+  }
+  calc_p = expr;
+  double result = parse_expr();
+  printf("%g\n", result);
+  return 1;
 }

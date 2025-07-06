@@ -1,3 +1,4 @@
+
 #include <limits.h> // For PATH_MAX
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,7 +19,11 @@ const char *builtin_commands[] = {
     "usage", // Provides a brief usage guide for the shell and its built-in command
     "env", // Lists all the environment variables currently set in the shell
     "setenv", // Sets or modifies an environment variable for this shell session
-    "unsetenv" // Removes an environment variable from the shell
+    "unsetenv",// Removes an environment variable from the shell
+    "batman",
+    "cyclops",
+    "squidward",
+    "calc"
     };
 
     /*
@@ -31,3 +36,7 @@ int shell_usage(char **args);
 int list_env(char **args);
 int set_env_var(char **args);
 int unset_env_var(char **args);
+int shell_batman(char **args);
+int shell_cyclops(char **args);
+int shell_squidward(char **args);
+int shell_calc(char **args);
