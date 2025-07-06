@@ -14,7 +14,23 @@ Steps to compile & run CSEShell:
 
 ## Built-in Functions 
 
-BLABLABLABLABLA
+| **Built-in Function**| **Description**                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cd`                 | Changes the current directory of the shell to the specified path. If no path is given, it defaults to the user's home directory.                               |
+| `help`               | Lists all built-in commands in the shell.                                                                                                                      |
+| `exit`               | Exits the shell.                                                                                                                                               |
+| `usage`              | Provides a brief usage guide for the shell and its built-in commands.                                                                                          |
+| `env`                | Lists all the environment variables currently set in the shell.                                                                                                |
+| `setenv`             | Sets or modifies an environment variable for this shell session.                                                                                               |
+| `unsetenv`           | Removes an environment variable from the shell.                                                                                                                |
+| `batman`             | Displays ASCII art of Batman.                                                                                                                                  |
+| `cyclops`            | Displays ASCII art of Cyclops.                                                                                                                                 |
+| `squidward`          | Displays ASCII art of Squidward.                                                                                                                               |
+| `calc`               | Performs basic arithmetic operations (`+`, `-`, `*`, `/`) e.g. `calc 1+1`.                                                                                     |
+| `set color_scheme`   | Changes the font color scheme of the prompt. Options: `dark`, `light`, `solarized`, `blue`, `green`, `red`, `default`. <br> *Example*: `set color_scheme=blue` |
+| `set show_timestamp` | Toggles display of the timestamp on the prompt. Use `1` to show, `0` to hide. <br> *Example*: `set show_timestamp=1`                                           |
+| `set prompt_format`  | Customizes the prompt style. Use `\u$` for username only, `\w$` for working directory. <br> *Example*: `set prompt_format=whateverCustomPromptYouWant`         |
+| `history`            | Displays a list of previously entered commands.                                                                                                                |
 
 ## Additional Features
 
