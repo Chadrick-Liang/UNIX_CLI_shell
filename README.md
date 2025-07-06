@@ -104,3 +104,16 @@ Justification:
 - This provides users with clear temporal context for their interactions
 - This is particularly beneficial for users who rely on time cues for task tracking, time-sensitive operations, or cognitive support
 - By offering a simple yet impactful customization that accommodates diverse working styles and needs, the feature enhances the shell’s usability for a broader range of users, reinforcing an inclusive and accessible command-line environment
+
+3. Customizable Interface --> Prompt Style 
+What it does:
+- The `set prompt_format` command allows users to customize the text that appears at the beginning of each command line (the shell prompt)
+- Whatever the user types after `set prompt_format=` becomes the new prompt, replacing the default format
+```bash
+set prompt_format=WhateverNameIWant
+```
+Justification:
+- The shell supports prompt customization through the set prompt_format command, allowing users to define their own prompt display text
+- This feature enables individuals to tailor the shell interface to suit their personal preferences, cultural norms, or accessibility needs (whether for improved readability, reduced cognitive load, or simple self-expression) 
+- By giving users full control over how their prompt appears, this functionality ensures a more welcoming and adaptable environment for diverse users, reinforcing the shell’s commitment to personalization and inclusivity
+
