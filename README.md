@@ -1,43 +1,37 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/0Pv6QfSB)
 # Welcome to CSEShell by CL01 Team 1 🐚
 
-CSEShell is a simple, custom shell for Unix-based systems, designed to provide an interface for executing system programs. This project includes a basic shell implementation, a set of system programs (`find`, `ld`, `ldr`), and some test files.
+CSEShell is a custom-built UNIX command-line shell created by CL01 Team 1! This shell mimics the behaviour of common terminal environments, supporting essential built-in commands (cd, help, exit), dynamic environment control and execution of external programs. We also developed system utilities (file search, dynamic library inspection and daemon processes) to showcase OS-level programming in C. CSEShell is built to handle the navigation of directories, managing environment variables and more with efficiency. 
 
-## Directory Structure
+## How to compile & Run shell 
 
-The project is organized as follows:
+Requirements: Linux environment
 
-- `bin/` - Contains compiled executables for system programs.
-  - `find` - Program to find files.
-  - `ld` - Program for listing the contents of the current directory.
-  - `ldr` - Program for listing the contents of the current directory recursively.
-- `cseshell` - The main executable for the CSEShell.
-- `files/` - Contains various test files used with the shell and system programs.
-  - `combined.txt`, `file1.txt`, `file2.txt`, ... - Test text files.
-  - `notes.pdf` - A PDF file for testing.
-  - `ss.png` - An image file.
-- `makefile` - Makefile for building the CSEShell and system programs.
-- `source/` - Source code for the shell and system programs.
-  - `shell.c` and `shell.h` - Source and header files for the shell.
-  - `system_programs/` - Source code and header for the system programs.
+Steps to compile & run CSEShell:
+-  Open your terminal and navigate to the project directory
+  - Optional: clean previous builds (if necessary) using command `make clean`
+- Compile the shell and all system programs using command `make`
+- Start the shell using command `./cseshell`
 
-## Building the Project
+## Built-in Functions 
 
-To build the CSEShell and system programs, run the following command in the root directory:
+BLABLABLABLABLA
 
+## Additional Features
+1. Character ASCII Art 
+  - Accessible through commands: `batman`, `cyclops`, `squidward`
+  - Example: ‘batman’ outputs Batman in ASCII Art 
+  - Adds fun and visually engaging elements to the shell, breaking the monotony of plain text interactions
 ```bash
-make
+batman
 ```
 
-This will compile the source code and place the executable files in the appropriate directories.
-
-## Running CSEShell
-
-After building, you can start the shell by running:
-
-```bash
-./cseshell
-```
+2. Basic Calculator
+  - Accessible through the `calc` command
+  - Example: `calc 1+1` outputs 2
+  - Be sure to type your equation without any trailing spaces
+  - This feature allows users to perform simple arithmetic operations directly within the terminal, including addition, subtraction, multiplication, division.
+  - It also includes basic error handling
+  - Example: Returns `inf` (which stands for infinity) when a number is divided by zero 
 
 From there, you can execute built-in commands and any of the included system programs (e.g., `find`, `ld`, `ldr`).
 
