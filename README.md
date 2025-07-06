@@ -2,7 +2,7 @@
 
 CSEShell is a custom-built UNIX command-line shell created by CL01 Team 1! This shell mimics the behaviour of common terminal environments, supporting essential built-in commands (cd, help, exit), dynamic environment control and execution of external programs. We also developed system utilities (file search, dynamic library inspection and daemon processes) to showcase OS-level programming in C. CSEShell is built to handle the navigation of directories, managing environment variables and more with efficiency. 
 
-## How to compile & Run shell 
+## How to Compile & Run Shell 
 
 Requirements: Linux environment
 
@@ -17,6 +17,7 @@ Steps to compile & run CSEShell:
 BLABLABLABLABLA
 
 ## Additional Features
+
 1. Character ASCII Art 
   - Accessible through commands: `batman`, `cyclops`, `squidward`
   - Example: ‘batman’ outputs Batman in ASCII Art 
@@ -31,30 +32,52 @@ batman
   - Be sure to type your equation without any trailing spaces
   - This feature allows users to perform simple arithmetic operations directly within the terminal, including addition, subtraction, multiplication, division.
   - It also includes basic error handling
-  - Example: Returns `inf` (which stands for infinity) when a number is divided by zero 
-
-From there, you can execute built-in commands and any of the included system programs (e.g., `find`, `ld`, `ldr`).
-
-## System Programs
-
-- `find.c` - Searches for files in a directory.
-- `ld.c` - List the contents of the curent directory.
-- `ldr.c` - List the contents of the current directory recursively.
-
-Each program can be executed from the CSEShell once it is running. This starter code only allows the shell to execute a command once before exiting because `execv` replace the entire process' address space. Students need to fix this and allow the shell to prompt for more commands in Programming Assignment 1.
-
-## Files Directory
-
-The `files/` directory contains various text, PDF, and image files for testing the functionality of the CSEShell and its system programs.
-
-## Makefile
-
-The Makefile contains rules for compiling the shell and system programs. You can clean the build by running:
-
+  - Example: Returns `inf` (which stands for infinity) when a number is divided by zero
 ```bash
-make clean
+calc
 ```
 
-## Source Directory
+3. History Script
+  - Accessible through `history` command
+  - Displays a list of previously executed commands in chronological order
+  - Each command is numbered, making it easy for users to identify and reference past inputs
+  - Acts as a tool to aid in debugging. Identifies execution patterns or troubleshooting issues by reviewing the command sequence
+```bash
+history
+```
 
-Contains all the necessary source code for the shell and system programs. It is divided into the shell implementation (`shell.c`, `shell.h`) and system programs (`system_programs/`).
+5. Arrow Key Navigation
+  - Pressing the up or down arrow keys cycles through previously entered commands
+  - Users can scroll backward to recall older commands or forward to return to more recent ones
+  - Reduces need to manually retype commands, improving efficiency and ease of use
+
+## Sustainability 
+
+1. Resource Usage Feedback -> Resource Display
+What it does:
+- After each command is executed, the shell automatically displays detailed statistics including CPU time (user and system), peak memory usage (RAM), context switches, and block I/O operations
+Justification:
+- By making resource consumption transparent to the user, the shell encourages more mindful usage of system resources
+- This helps users identify inefficient commands or scripts, reduce unnecessary computational load, and adopt more optimised workflows
+- In doing so, the shell not only fosters better programming practices but also aligns with broader sustainability goals by supporting energy-efficient computing
+
+## Inclusivity 
+
+1. Customizable Interface -> Colour Change
+What it does:
+- Allows users to change the color scheme of the shell prompt using the `set colour_scheme` command
+- This functionality is supported through a dedicated data structure that stores and manages color preferences
+Justification:
+- To promote inclusivity, the shell includes a customisable prompt color feature that can be activated using the `set colour_scheme` command
+- This allows users to select a visual style that best suits their preferences or accessibility needs, such as improved contrast for better visibility or reduced brightness for light sensitivity
+- The implementation uses a dedicated data structure to manage color configurations, enabling flexible and consistent prompt styling
+- By supporting visual customization, this feature ensures that users with different visual abilities or preferences can interact with the shell more comfortably, fostering a more inclusive and user-friendly experience
+
+2. Customizable Interface -> Timestamp Display
+What it does:
+- The shell includes a timestamp display feature that can be enabled using the `set show_timestamp` command
+- When activated, the shell appends the current time to each command prompt
+Justification:
+- This provides users with clear temporal context for their interactions
+- This is particularly beneficial for users who rely on time cues for task tracking, time-sensitive operations, or cognitive support
+- By offering a simple yet impactful customization that accommodates diverse working styles and needs, the feature enhances the shell’s usability for a broader range of users, reinforcing an inclusive and accessible command-line environment
