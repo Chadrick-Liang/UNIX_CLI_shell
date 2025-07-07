@@ -286,7 +286,7 @@ void read_command(char **cmd) {
     char buf[MAX_LINE]     = {0};
     int  pos = 0, hist_i;
 
-    // 1) enable raw mode
+    // enable raw mode
     tcgetattr(STDIN_FILENO, &orig);
     raw = orig;
     raw.c_lflag &= ~(ECHO | ICANON);
@@ -294,7 +294,7 @@ void read_command(char **cmd) {
 
     hist_i = history_count;  // start "below" the latest history entry
 
-    // 3) read keystroke-by-keystroke
+    // read keystroke-by-keystroke
     while (1) {
         char c;
         if (read(STDIN_FILENO, &c, 1) != 1) break;
