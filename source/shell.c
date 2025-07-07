@@ -18,34 +18,46 @@
 #include <ctype.h>
 #include <termios.h> // to detect up down button inputs
 
-void type_prompt(void);
+void type_prompt(void); //declaration to be instantiated later
 
-#define MAX_ARGS 64
-#define MAX_RC_LINES 100
-#define MAX_LINE_LEN 1024
+//preprocessor macros(find and replace directives the compiler runs)
+#define MAX_ARGS 64   //constant for max args for shell
+#define MAX_RC_LINES 100   //constant for max lines in startup rc file
+#define MAX_LINE_LEN 1024   //constant for max characters in one input line
 
 /*history list*/
-#define MAX_HISTORY 100
-static char *history[MAX_HISTORY];
-static int  history_count = 0;
+#define MAX_HISTORY 100 //max number of commands remembered in history
+static char *history[MAX_HISTORY]; //array of char pointers for commands
+static int  history_count = 0; //counter for commands stored up to this point
 
 
 //global snapshot variables
-static struct rusage prev_usage = {0};
+static struct rusage prev_usage = {0}; //structure of resource stats, initialized at 0
 static struct rusage curr_usage;
 
-//struct for customized appearance
+//custom data type struct for customized appearance, named shell_config_t
 typedef struct {
   char *prompt_format;    // e.g. "\\u@\\h:\\w$ "
   char *color_scheme;     // e.g. "default", "dark", "light", "solarized"
   int   show_timestamp;   // 0 or 1
 } shell_config_t;
 
-static shell_config_t config;
+static shell_config_t config; //instance of new data type named config
 
-static const char *calc_p;
+void apply_color_scheme(void) {
+  if      (strcmp(config.color_scheme, "solarized")==0) printf("\x1b[33m");
+  else if (strcmp(config.color_scheme, "dark"     )==0) printf("\x1b[37m");
+  else if (strcmp(config.color_scheme, "light"    )==0) printf("\x1b[30;47m");
+  else if (strcmp(config.color_scheme, "blue"     )==0) printf("\x1b[34m");
+  else if (strcmp(config.color_scheme, "green"    )==0) printf("\x1b[32m");
+  else if (strcmp(config.color_scheme, "red"      )==0) printf("\x1b[31m");
+  else /* default */                                   printf("\x1b[0m");
+  fflush(stdout);
+}
 
-// forward decls
+static const char *calc_p; //pointer to individual math chars
+
+// forward decls, function delcarations
 static double parse_expr(void);
 static double parse_term(void);
 static double parse_factor(void);
@@ -65,7 +77,7 @@ static double parse_expr(void) {
 static double parse_term(void) {
   double v = parse_factor();
   while (*calc_p == '*' || *calc_p == '/') {
-    char op = *calc_p++;
+    char op = *calc_p++; //grabs the char which is * or /, then increments index
     double r = parse_factor();
     v = (op == '*') ? v * r : v / r;
   }
@@ -74,21 +86,22 @@ static double parse_term(void) {
 
 // factor := number | '(' expr ')'
 static double parse_factor(void) {
-  while (isspace(*calc_p)) calc_p++;
+  while (isspace(*calc_p)) calc_p++; //skips chars that are spaces
   if (*calc_p == '(') {
     calc_p++;               // skip '('
-    double v = parse_expr();
+    double v = parse_expr(); //recursively parses inner expression
     if (*calc_p == ')') calc_p++;
     return v;
   }
-  char *end;
-  double v = strtod(calc_p, &end);
+  char *end; //character pointer end
+  double v = strtod(calc_p, &end); //converts string to double
   calc_p = end;
   return v;
 }
 
 // Draw the prompt according to current config
 void draw_prompt() {
+    apply_color_scheme();
     char buf[128], cwd[2048], host[2048];
     char *p = config.prompt_format;
 
@@ -153,10 +166,6 @@ void draw_prompt() {
             putchar(*p++);
         }
     }
-
-    // reset color
-    if (strcmp(config.color_scheme, "default")!=0)
-        printf("\x1b[0m");
 
     fflush(stdout);
 }
@@ -264,33 +273,13 @@ void process_rc_file() {
 
 int (*builtin_command_func[])(char **) = {
     &shell_cd, &shell_help, &shell_exit, &shell_usage,
-    &list_env, &set_env_var, &unset_env_var, &shell_batman, &shell_cyclops, &shell_squidward, &shell_calc,
+    &list_env, &set_env_var, &unset_env_var, &shell_batman, &shell_cyclops, &shell_squidward, &shell_calc, &shell_set, &shell_history,
 };
 
 int num_builtin_functions() {
     return sizeof(builtin_commands) / sizeof(char *);
 }
 
-/*void read_command(char **cmd) {
-    char line[MAX_LINE]; int count = 0, i = 0;
-    char *array[MAX_ARGS], *command_token;
-    for (;;) {
-        int c = fgetc(stdin);
-        line[count++] = (char)c;
-        if (c == '\n') break;
-        if (count >= MAX_LINE) { printf("Command too long\n"); exit(1); }
-    }
-    line[count] = '\0';
-    if (count == 1) { cmd[0] = NULL; return; }
-
-    command_token = strtok(line, " \n");
-    while (command_token) {
-        array[i++] = strdup(command_token);
-        command_token = strtok(NULL, " \n");
-    }
-    for (int j = 0; j < i; j++) cmd[j] = array[j];
-    cmd[i] = NULL;
-}*/
 void read_command(char **cmd) {
     struct termios orig, raw;
     char prompt_buf[64] = {0};
@@ -312,6 +301,7 @@ void read_command(char **cmd) {
 
         // Enter: finish reading
         if (c == '\r' || c == '\n') {
+            buf[pos] = '\0'; 
             write(STDIN_FILENO, "\r\n", 2);
             break;
         }
@@ -319,6 +309,7 @@ void read_command(char **cmd) {
         else if (c == 127 || c == '\b') {
             if (pos > 0) {
                 pos--;
+                buf[pos] = '\0'; 
                 write(STDOUT_FILENO, "\b \b", 3);
             }
         }
@@ -375,34 +366,6 @@ void read_command(char **cmd) {
     cmd[argc] = NULL;
 }
 
-// Draw the prompt according to current config
-//void draw_prompt() {
-//    char buf[128];
-//
-//    //Optional timestamp
-//    if (config.show_timestamp) {
-//        time_t t = time(NULL);
-//        struct tm *tm = localtime(&t);
-//        strftime(buf, sizeof(buf), "[%H:%M:%S] ", tm);
-//        printf("%s", buf);
-//    }
-//
-//    //Colour scheme
-//    if (strcmp(config.color_scheme, "solarized") == 0) {
-//        printf("\x1b[33m");   // yellow
-//    } else if (strcmp(config.color_scheme, "dark") == 0) {
-//        printf("\x1b[37m");   // bright white
-//    }
-//    // otherwise default no colour
-//    //Prompt format string
-//    printf("%s", config.prompt_format);
-//
-//    if (strcmp(config.color_scheme, "default") != 0) {
-//        printf("\x1b[0m");
-//    }
-//}
-//
-//
 void type_prompt() {
     static int first = 1;
     if (first) { first = 0; }
@@ -437,92 +400,71 @@ int main(void) {
 
     while (running) {
         type_prompt();
+        apply_color_scheme();
         read_command(cmd);
         if (!cmd[0]) continue;
         if (!strcmp(cmd[0], "exit")) { running = 0; continue; }
 
-	//built-in for set command
-    	if (strcmp(cmd[0], "set") == 0 && cmd[1] && strchr(cmd[1], '=')) {
-            char *eq    = strchr(cmd[1], '=');
-            *eq         = '\0';
-            char *key   = cmd[1];
-            char *value = eq + 1;
-
-            if (strcmp(key, "prompt_format") == 0) {
-            	free(config.prompt_format);
-            	config.prompt_format = strdup(value);
-            } else if (strcmp(key, "color_scheme") == 0) {
-            	free(config.color_scheme);
-            	config.color_scheme = strdup(value);
-            } else if (strcmp(key, "show_timestamp") == 0) {
-            	config.show_timestamp = atoi(value);
-            } else {
-            	fprintf(stderr, "Unknown setting “%s”\n", key);
-            }
-            continue;
-    	}
-
-	//built-in for history command
-	if (strcmp(cmd[0], "history") == 0) {
-    	    for (int i = 0; i < history_count; i++) {
-        // print with 1-based index
-        	printf("%4d  %s\n", i + 1, history[i]);
-    	    }
-    	continue;  // skip forking/execution
-	}
-
-
+        //new snapshot position
+        getrusage(RUSAGE_CHILDREN, &prev_usage);
 
         // Built-ins
         int is_builtin = 0;
-        for (int i = 0; i < num_builtin_functions(); i++) {
+        /*for (int i = 0; i < num_builtin_functions(); i++) {
             if (!strcmp(cmd[0], builtin_commands[i])) {
                 builtin_command_func[i](cmd);
                 for (int j = 0; cmd[j]; j++) free(cmd[j]);
                 is_builtin = 1; break;
             }
-        }
-        if (is_builtin) continue;
-
-        // External commands
-        //snapshot of resource usage
-        getrusage(RUSAGE_CHILDREN, &prev_usage);
-        pid = fork();
-        if (pid == 0) {
-            execvp(cmd[0], cmd);
-            fprintf(stderr, "command %s not found\n", cmd[0]);
-            exit(EXIT_FAILURE);
-        } else if (pid > 0) {
-            wait(NULL);
-            getrusage(RUSAGE_CHILDREN, &curr_usage);
-            char *cmd_name = cmd[0];
-            // find before - after
-            double u = (curr_usage.ru_utime.tv_sec  - prev_usage.ru_utime.tv_sec)
-             + (curr_usage.ru_utime.tv_usec - prev_usage.ru_utime.tv_usec) / 1e6;
-            double s = (curr_usage.ru_stime.tv_sec  - prev_usage.ru_stime.tv_sec)
-             + (curr_usage.ru_stime.tv_usec - prev_usage.ru_stime.tv_usec) / 1e6;
-            long m = curr_usage.ru_maxrss - prev_usage.ru_maxrss;
-            long i = curr_usage.ru_inblock - prev_usage.ru_inblock;
-            long o = curr_usage.ru_oublock - prev_usage.ru_oublock;
-
-            // print resource stats
-            printf("\n");
-            printf("Resource usage for \"%s\":\n", cmd_name);
-            printf("  Amount of CPU time in user mode       : %.3f seconds\n", u);
-            printf("  Amount of CPU time in kernel mode     : %.3f seconds\n", s);
-            printf("  Peak RAM usage (max resident size)    : %ld KB\n", m);
-            printf("  Block I/O read operations             : %ld\n", i);
-            printf("  Block I/O write operations            : %ld\n", o);
-            printf("\n");
-
-
-            // reset for next command
-            prev_usage = curr_usage;
-            for (int i = 0; cmd[i]; i++) free(cmd[i]);
-        } else {
-            perror("fork failed"); running = 0;
+        }*/
+       for (int i = 0; i < num_builtin_functions(); i++) {
+        if (strcmp(cmd[0], builtin_commands[i]) == 0) {
+            builtin_command_func[i](cmd);
+            is_builtin = 1;
+            break;
         }
     }
+
+        if (!is_builtin && running) {
+            pid = fork();
+            if (pid == 0) {
+                execvp(cmd[0], cmd);
+                fprintf(stderr, "command %s not found\n", cmd[0]);
+                exit(EXIT_FAILURE);
+            } else if (pid > 0) {
+                wait(NULL);
+            } else {
+                perror("fork failed");
+                running = 0;
+            }
+        }
+
+        getrusage(RUSAGE_CHILDREN, &curr_usage);
+        {
+            double u = (curr_usage.ru_utime.tv_sec  - prev_usage.ru_utime.tv_sec)
+                     + (curr_usage.ru_utime.tv_usec - prev_usage.ru_utime.tv_usec)/1e6;
+            double s = (curr_usage.ru_stime.tv_sec  - prev_usage.ru_stime.tv_sec)
+                     + (curr_usage.ru_stime.tv_usec - prev_usage.ru_stime.tv_usec)/1e6;
+            long m =  curr_usage.ru_maxrss - prev_usage.ru_maxrss;
+            long i_blocks = curr_usage.ru_inblock  - prev_usage.ru_inblock;
+            long o_blocks = curr_usage.ru_oublock  - prev_usage.ru_oublock;
+
+            printf("\nResource usage for \"%s\":\n", cmd[0]);
+            printf("  User CPU time       : %.3f s\n", u);
+            printf("  System CPU time     : %.3f s\n", s);
+            printf("  Peak RAM (KB)       : %ld\n", m);
+            printf("  Block I/O reads     : %ld\n", i_blocks);
+            printf("  Block I/O writes    : %ld\n\n", o_blocks);
+
+            // reset for next iteration
+            prev_usage = curr_usage;
+        }
+
+        // 6) Clean up arguments
+        for (int j = 0; cmd[j]; j++)
+            free(cmd[j]);
+
+    } //end of while running
     return 0;
 }
 
@@ -747,3 +689,38 @@ int shell_calc(char **args) {
   printf("%g\n", result);
   return 1;
 }
+
+int shell_set(char **args) {
+  if (!args[1] || !strchr(args[1], '=')) {
+    fprintf(stderr, "Usage: set key=value\n");
+    return 1;
+  }
+  char *eq    = strchr(args[1], '=');
+  *eq         = '\0';
+  char *key   = args[1];
+  char *value = eq + 1;
+
+  if (strcmp(key, "prompt_format") == 0) {
+    free(config.prompt_format);
+    config.prompt_format = strdup(value);
+  } else if (strcmp(key, "color_scheme") == 0) {
+    free(config.color_scheme);
+    apply_color_scheme();
+    config.color_scheme = strdup(value);
+  } else if (strcmp(key, "show_timestamp") == 0) {
+    config.show_timestamp = atoi(value);
+  } else {
+    fprintf(stderr, "Unknown setting “%s”\n", key);
+  }
+  return 1;
+}
+
+int shell_history(char **args) {
+  (void)args;
+  for (int i = 0; i < history_count; i++) {
+    // 1-based index to match bash
+    printf("%4d  %s\n", i + 1, history[i]);
+  }
+  return 1;
+}
+

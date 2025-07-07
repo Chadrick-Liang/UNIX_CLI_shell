@@ -23,7 +23,9 @@ const char *builtin_commands[] = {
     "batman",
     "cyclops",
     "squidward",
-    "calc"
+    "calc",
+    "set",
+    "history"
     };
 
     /*
@@ -40,3 +42,5 @@ int shell_batman(char **args);
 int shell_cyclops(char **args);
 int shell_squidward(char **args);
 int shell_calc(char **args);
+int shell_set(char **args);
+int shell_history(char **args);
