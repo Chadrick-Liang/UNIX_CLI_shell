@@ -348,15 +348,15 @@ void read_command(char **cmd) {
         }
     }
 
-    // 4) disable raw mode
+    //disable raw mode
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
 
-    // 5) record non-empty line into history
+    //record non-empty line into history
     if (pos > 0 && history_count < MAX_HISTORY) {
         history[history_count++] = strdup(buf);
     }
 
-    // 6) tokenize into cmd[]
+    //okenize into cmd[]
     int argc = 0;
     char *tok = strtok(buf, " \n");
     while (tok && argc < MAX_ARGS-1) {
@@ -460,7 +460,7 @@ int main(void) {
             prev_usage = curr_usage;
         }
 
-        // 6) Clean up arguments
+        // Clean up arguments
         for (int j = 0; cmd[j]; j++)
             free(cmd[j]);
 
